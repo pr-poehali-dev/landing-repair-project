@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import Icon from "@/components/ui/icon";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 
 // Структура для вопросов квиза
 interface QuizQuestion {
@@ -37,6 +39,7 @@ function Index() {
   const [formErrors, setFormErrors] = useState<Partial<FormData>>({});
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const { toast } = useToast();
 
   // Вопросы для квиза
   const questions: QuizQuestion[] = [
@@ -67,6 +70,7 @@ function Index() {
     },
   ];
 
+  // Функция для обработки выбора варианта ответа
   const handleOptionSelect = (answer: string) => {
     setAnswers({ ...answers, [currentStep]: answer });
     if (currentStep < questions.length - 1) {
@@ -76,12 +80,17 @@ function Index() {
     }
   };
 
+  // Функция для возврата к предыдущему вопросу
   const handlePrevious = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+    } else if (quizCompleted) {
+      setQuizCompleted(false);
+      setCurrentStep(questions.length - 1);
     }
   };
 
+  // Обработка изменения формы
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -91,6 +100,7 @@ function Index() {
     }
   };
 
+  // Валидация формы
   const validateForm = (): boolean => {
     const errors: Partial<FormData> = {};
     if (!formData.name.trim()) errors.name = "Имя обязательно";
@@ -102,6 +112,7 @@ function Index() {
     return Object.keys(errors).length === 0;
   };
 
+  // Обработка отправки формы
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
@@ -128,6 +139,7 @@ function Index() {
     }
   };
 
+  // Запуск квиза
   const startQuiz = () => {
     setShowQuiz(true);
     setCurrentStep(0);
@@ -135,7 +147,25 @@ function Index() {
     setAnswers({});
   };
 
+  // Расчет прогресса квиза
   const progress = ((currentStep + 1) / questions.length) * 100;
+
+  // Обработка отправки контактной формы
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Сообщение отправлено",
+      description: "Мы ответим вам в ближайшее время",
+    });
+  };
+
+  // Обработка запроса обратного звонка
+  const handleCallbackRequest = () => {
+    toast({
+      title: "Запрос принят",
+      description: "Наш менеджер перезвонит вам в ближайшее время",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -160,7 +190,12 @@ function Index() {
               <Icon name="Phone" className="inline mr-1 h-4 w-4" />
               +7 (999) 123-45-67
             </span>
-            <Button size="sm" variant="outline" className="flex items-center">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="flex items-center"
+              onClick={handleCallbackRequest}
+            >
               <Icon name="PhoneCall" className="mr-2 h-4 w-4" />
               <span>Обратный звонок</span>
             </Button>
@@ -188,7 +223,11 @@ function Index() {
               >
                 Рассчитать стоимость ремонта
               </Button>
-              <Button size="lg" variant="outline">
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => document.getElementById('portfolio')?.scrollIntoView({ behavior: 'smooth' })}
+              >
                 Наши работы
               </Button>
             </div>
@@ -203,7 +242,7 @@ function Index() {
         </div>
       </section>
 
-      {/* Квиз */}
+      {/* Квиз модальное окно */}
       {showQuiz && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-2xl bg-white">
@@ -223,7 +262,9 @@ function Index() {
               <div className="mb-6">
                 <Progress value={progress} className="h-2" />
                 <p className="text-sm text-gray-500 mt-2">
-                  Шаг {currentStep + 1} из {questions.length}
+                  {!quizCompleted 
+                    ? `Шаг ${currentStep + 1} из ${questions.length}` 
+                    : "Заполните ваши данные для получения расчета"}
                 </p>
               </div>
               
@@ -378,6 +419,74 @@ function Index() {
               </CardContent>
             </Card>
           </div>
+          
+          <div className="mt-12 grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h3 className="text-2xl font-semibold mb-4">Почему выбирают нас</h3>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <Icon name="Check" className="h-5 w-5 text-green-500 mr-3 mt-0.5 shrink-0" />
+                  <span>Фиксированная стоимость ремонта в договоре</span>
+                </li>
+                <li className="flex items-start">
+                  <Icon name="Check" className="h-5 w-5 text-green-500 mr-3 mt-0.5 shrink-0" />
+                  <span>Соблюдение сроков с финансовой ответственностью за задержку</span>
+                </li>
+                <li className="flex items-start">
+                  <Icon name="Check" className="h-5 w-5 text-green-500 mr-3 mt-0.5 shrink-0" />
+                  <span>Профессиональные дизайнеры и инженеры в команде</span>
+                </li>
+                <li className="flex items-start">
+                  <Icon name="Check" className="h-5 w-5 text-green-500 mr-3 mt-0.5 shrink-0" />
+                  <span>Прозрачный процесс работы и регулярные отчеты</span>
+                </li>
+                <li className="flex items-start">
+                  <Icon name="Check" className="h-5 w-5 text-green-500 mr-3 mt-0.5 shrink-0" />
+                  <span>Работаем с проверенными поставщиками материалов</span>
+                </li>
+              </ul>
+              <div className="mt-6">
+                <Button onClick={startQuiz} className="bg-blue-600 hover:bg-blue-700">
+                  Рассчитать стоимость
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="p-4 flex items-center justify-center bg-blue-50">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-600">500+</p>
+                    <p className="text-sm text-gray-600">Выполненных проектов</p>
+                  </div>
+                </Card>
+                <Card className="p-4 flex items-center justify-center bg-blue-50">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-600">98%</p>
+                    <p className="text-sm text-gray-600">Довольных клиентов</p>
+                  </div>
+                </Card>
+                <Card className="p-4 flex items-center justify-center bg-blue-50">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-600">3 года</p>
+                    <p className="text-sm text-gray-600">Гарантии на работы</p>
+                  </div>
+                </Card>
+                <Card className="p-4 flex items-center justify-center bg-blue-50">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-600">47</p>
+                    <p className="text-sm text-gray-600">Сотрудников</p>
+                  </div>
+                </Card>
+              </div>
+              <div className="flex justify-center mt-2">
+                <img 
+                  src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3" 
+                  alt="Наша команда" 
+                  className="rounded-lg shadow-md max-h-48 object-cover" 
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -416,7 +525,7 @@ function Index() {
                       <span>Замена дверей и фурнитуры</span>
                     </li>
                   </ul>
-                  <Button className="mt-6">
+                  <Button className="mt-6" onClick={startQuiz}>
                     Узнать стоимость
                   </Button>
                 </div>
@@ -454,7 +563,7 @@ function Index() {
                       <span>Полная отделка всех поверхностей</span>
                     </li>
                   </ul>
-                  <Button className="mt-6">
+                  <Button className="mt-6" onClick={startQuiz}>
                     Узнать стоимость
                   </Button>
                 </div>
@@ -492,7 +601,7 @@ function Index() {
                       <span>Финальная уборка и подготовка к заселению</span>
                     </li>
                   </ul>
-                  <Button className="mt-6">
+                  <Button className="mt-6" onClick={startQuiz}>
                     Узнать стоимость
                   </Button>
                 </div>
@@ -737,7 +846,7 @@ function Index() {
               <Card>
                 <CardContent className="pt-6">
                   <h3 className="text-xl font-semibold mb-4">Есть вопросы? Напишите нам</h3>
-                  <form className="space-y-4">
+                  <form className="space-y-4" onSubmit={handleContactSubmit}>
                     <div>
                       <Label htmlFor="contact-name">Ваше имя</Label>
                       <Input id="contact-name" placeholder="Иван Петров" />
@@ -758,13 +867,26 @@ function Index() {
                         rows={4} 
                       />
                     </div>
-                    <Button type="button" className="w-full bg-blue-600 hover:bg-blue-700">
+                    <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
                       Отправить сообщение
                     </Button>
                   </form>
                 </CardContent>
               </Card>
             </div>
+          </div>
+          
+          <div className="mt-12 rounded-lg overflow-hidden shadow-lg">
+            <iframe 
+              title="Карта офиса"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2245.5488550444763!2d37.5344997!3d55.7506132!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x46b54c0baaaaaaaa%3A0xaaaaaaaaaaaaaaaa!2z0YPQuy4g0KHRgtGA0L7QuNGC0LXQu9C10LksIDE1LCDQnNC-0YHQutCy0LA!5e0!3m2!1sru!2sru!4v1620000000000!5m2!1sru!2sru" 
+              width="100%" 
+              height="400" 
+              style={{ border: 0 }} 
+              allowFullScreen 
+              loading="lazy" 
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
           </div>
         </div>
       </section>
@@ -819,19 +941,19 @@ function Index() {
               <h4 className="text-lg font-semibold mb-4">Информация</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <a href="#" className="hover:text-white">О компании</a>
+                  <a href="#about" className="hover:text-white">О компании</a>
                 </li>
                 <li>
                   <a href="#" className="hover:text-white">Цены на услуги</a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">Портфолио</a>
+                  <a href="#portfolio" className="hover:text-white">Портфолио</a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">Отзывы</a>
+                  <a href="#testimonials" className="hover:text-white">Отзывы</a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">Контакты</a>
+                  <a href="#contacts" className="hover:text-white">Контакты</a>
                 </li>
               </ul>
             </div>
@@ -859,9 +981,11 @@ function Index() {
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center">
+          <Separator className="my-8 bg-gray-800" />
+          
+          <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm">
-              2025 РемонтПроф. Все права защищены.
+              © 2025 РемонтПроф. Все права защищены.
             </p>
             <div className="flex space-x-4 mt-4 md:mt-0">
               <a href="#" className="text-gray-500 hover:text-white text-sm">
